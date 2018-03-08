@@ -1,0 +1,11 @@
+{
+  "name": "messenger-codes",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/CMP-Studio/messenger-codes.git",
+  "author": "Abhishek Chadha <abhishekchadha235@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^0.18.0"
+  }
+}
