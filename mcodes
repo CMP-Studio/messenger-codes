@@ -11,7 +11,7 @@ const axios = require("axios");
 const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
-const manifest = require('./manifest.json');
+
 const inquirer = require('inquirer');
 const program = require('commander');
 const git = require('simple-git');
@@ -50,8 +50,8 @@ if (typeof cmdValue !== 'undefined') {
             createCodeRequested(envValue, env2Value);
             break;
 
-        case 'configure':
-            syncRepo()
+        case 'init':
+            initialize()
             break;
     
         default:
@@ -61,6 +61,56 @@ if (typeof cmdValue !== 'undefined') {
 } else {
     console.error('no command given!');
     process.exit(1);
+}
+
+async function initialize() {
+
+    if (fs.existsSync(path.join(__dirname, 'mcodes.config.json'))) {
+        console.log('mcodes already initialized');
+        return;
+    }
+
+    repo.checkIsRepo((err, result) => {
+        if (isNonNull(err)) {
+            console.log('Must be a git repo');
+            throw err;
+        } else {
+
+            const questions = [
+                {
+                    type: 'input',
+                    name: 'pageName',
+                    message: "Page Name"
+                },
+                {
+                    type: 'input',
+                    name: 'pageAccessToken',
+                    message: "Page Access token"
+                },
+                {
+                    type: 'input',
+                    name: 'appId',
+                    message: "App ID"
+                }
+            ];
+        
+            inquirer.prompt(questions).then(async (answers) => {
+        
+                const pageName = answers.pageName;
+                const pageAccessToken = answers.pageAccessToken;
+                const appId = answers.appId;
+
+                fs.writeFileSync(path.join(__dirname, 'mcodes.config.json'), JSON.stringify({
+                    name: pageName,
+                    appId,
+                    pageAccessToken
+                }, null, "\t"));
+
+                console.log('mcodes initialized');
+            });
+        }
+    })
+    
 }
 
 async function createCode(ref, pageAccessToken, imageSize) {
@@ -93,7 +143,7 @@ async function createCodeRequested(ref, description) {
         console.warn('Bad arguments');
     }
     const newObjJson = { ref, description  };
-    var questions = [
+    const questions = [
         {
             type: 'confirm',
             name: 'createCode',
@@ -108,7 +158,6 @@ async function createCodeRequested(ref, description) {
         const accessToken = require(path.join(__dirname, 'mcodes.config.json'))['pageAccessToken'] || answers['auth-token'];
         const size = 2000;
     
-
         if (answers.createCode === true) {
             result = await createCode(ref, accessToken, size);
             await saveCode(result.uri, result.id, ref, description);
@@ -116,19 +165,18 @@ async function createCodeRequested(ref, description) {
         }
     });
 
-
 }
 
 async function saveCode(uri, id, ref, description) {
     if (isNull(uri) || isNull(ref)) {
         return;
     }
-
+    const manifest = require('./manifest.json');
     const response = await axios.get(uri, { responseType: 'arraybuffer'});
     const fileBuffer = new Buffer(response.data, "binary");
     fs.writeFileSync(path.join(__dirname, 'img', id + '.png'), fileBuffer);
     manifest[id] = { uri, ref, description }
-    fs.writeFileSync(path.join(__dirname, 'manifest.json'), JSON.stringify(manifest, null, "\t"));
+    fs.writeFileSync(path.join(__dirname, 'manifest.json'), `${JSON.stringify(manifest, null, "\t")}\n`);
 }
 
 async function syncRepo() {
@@ -141,5 +189,3 @@ async function syncRepo() {
     console.log('Sync complete.');
 }
 
-
-// main()
