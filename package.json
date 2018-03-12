@@ -11,5 +11,8 @@
     "inquirer": "^5.1.0",
     "simple-git": "^1.92.0"
   },
-  "bin" : { "mcodes" : "./mcodes" }
+  "bin" : {
+    "mcodes" : "./messenger-codes",
+    "messenger-codes" : "./messenger-codes"
+  }
 }

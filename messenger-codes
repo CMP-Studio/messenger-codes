@@ -73,7 +73,7 @@ async function initialize() {
     }
 
     repo.checkIsRepo((err, result) => {
-        if (isNonNull(err)) {
+        if (isNonNull(err) || result === false) {
             console.log('Must be a git repo');
             throw err;
         } else {
