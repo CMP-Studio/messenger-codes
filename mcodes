@@ -1,0 +1,145 @@
+#!/usr/bin/env node
+
+/**
+ * mcodes is a simple command line utility to manage dynamic messenger codes for your FB Messenger bot
+ * You can use mcodes to create messenger codes and manage them through git. Then you can use your submodule
+ * 
+ * mcodes create <ref> <pageAccess> --> ID
+ */
+
+const axios = require("axios");
+const crypto = require("crypto");
+const fs = require("fs");
+const path = require("path");
+const manifest = require('./manifest.json');
+const inquirer = require('inquirer');
+const program = require('commander');
+const git = require('simple-git');
+const repo = git(__dirname);
+
+const isNull = (v) => (v === undefined) || (v === null);
+const isNonNull = (v) => !isNull(v);
+
+let cmdValue, envValue, env2Value;
+
+program
+.version('0.1.0')
+.description('Manage messenger short codes with source control')
+.usage('[options] <file ...>')
+.arguments('<cmd> [arg1] [arg2] [arg3]')
+.action(function (cmd, arg1, arg2) {
+    cmdValue = cmd;
+    envValue = arg1;
+    env2Value = arg2;
+})
+.option('-d, --debug', 'Debug')
+.option('-f, --force', 'Force')
+.option('-a, --auth-token [value]', 'Facebook page auth token')
+
+program.parse(process.argv);
+if (typeof cmdValue !== 'undefined') {
+
+    switch (cmdValue) {
+
+        case 'sync':
+            console.log('Syncing with git repo...');
+            syncRepo();
+            break;
+
+        case 'create':
+            createCodeRequested(envValue, env2Value);
+            break;
+
+        case 'configure':
+            syncRepo()
+            break;
+    
+        default:
+            break;
+    }
+
+} else {
+    console.error('no command given!');
+    process.exit(1);
+}
+
+async function createCode(ref, pageAccessToken, imageSize) {
+    if (isNull(ref) || isNull(pageAccessToken)) {
+        console.log("ref and pageAccesToken must be defined");
+        return;
+    }
+
+    const size = imageSize || 2000;
+    const url = "https://graph.facebook.com/v2.6/me/messenger_codes?access_token=" + pageAccessToken;
+    const method = "POST";
+    const id = crypto.randomBytes(4).toString('hex');
+    const data = { 
+        type: "standard",
+        data: { ref: id },
+        image_size: size
+    };
+    try {
+        const response = await axios.post(url, data);
+        return Object.assign({ id: id }, response.data);
+    } catch (err) {
+        throw new Error("There was an error resolving the request to Facebook");
+    }
+}
+
+
+async function createCodeRequested(ref, description) {
+
+    if (isNull(ref) || ref.length === 0 || isNull(description) || description.length === 0) {
+        console.warn('Bad arguments');
+    }
+    const newObjJson = { ref, description  };
+    var questions = [
+        {
+            type: 'confirm',
+            name: 'createCode',
+            message: `Does this look right? \n${JSON.stringify(newObjJson, null, '  ')}`,
+            default: false
+        }
+    ];
+
+
+    inquirer.prompt(questions).then(async (answers) => {
+
+        const accessToken = require(path.join(__dirname, 'mcodes.config.json'))['pageAccessToken'] || answers['auth-token'];
+        const size = 2000;
+    
+
+        if (answers.createCode === true) {
+            result = await createCode(ref, accessToken, size);
+            await saveCode(result.uri, result.id, ref, description);
+            await syncRepo();
+        }
+    });
+
+
+}
+
+async function saveCode(uri, id, ref, description) {
+    if (isNull(uri) || isNull(ref)) {
+        return;
+    }
+
+    const response = await axios.get(uri, { responseType: 'arraybuffer'});
+    const fileBuffer = new Buffer(response.data, "binary");
+    fs.writeFileSync(path.join(__dirname, 'img', id + '.png'), fileBuffer);
+    manifest[id] = { uri, ref, description }
+    fs.writeFileSync(path.join(__dirname, 'manifest.json'), JSON.stringify(manifest, null, "\t"));
+}
+
+async function syncRepo() {
+    const commitMessage = `Automated commit by ${require("os").userInfo().username}`
+    repo.pull('origin', 'master')
+        .add(['./img/*', './manifest.json'])
+        .commit(commitMessage)
+        .push('origin', 'master');
+
+    console.log('Sync complete.');
+}
+
+
+// main()
