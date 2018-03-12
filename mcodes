@@ -108,6 +108,9 @@ async function initialize() {
                     pageAccessToken
                 }, null, "\t"));
 
+                fs.writeFileSync(path.join(currentDir, 'manifest.json'), JSON.stringify({}, null, "\t"));
+
+
                 console.log('mcodes initialized');
             });
         }
@@ -173,7 +176,7 @@ async function saveCode(uri, id, ref, description) {
     if (isNull(uri) || isNull(ref)) {
         return;
     }
-    const manifest = require('./manifest.json');
+    const manifest = require(path.join(process.cwd(), 'manifest.json');
     const response = await axios.get(uri, { responseType: 'arraybuffer'});
     const fileBuffer = new Buffer(response.data, "binary");
     fs.writeFileSync(path.join(currentDir, 'img', id + '.png'), fileBuffer);
