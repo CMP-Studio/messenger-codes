@@ -15,12 +15,14 @@ const path = require("path");
 const inquirer = require('inquirer');
 const program = require('commander');
 const git = require('simple-git');
-const repo = git(__dirname);
+const currentDir = process.cwd();
+const repo = git(currentDir);
 
 const isNull = (v) => (v === undefined) || (v === null);
 const isNonNull = (v) => !isNull(v);
 
 let cmdValue, envValue, env2Value;
+
 
 program
 .version('0.1.0')
@@ -65,7 +67,7 @@ if (typeof cmdValue !== 'undefined') {
 
 async function initialize() {
 
-    if (fs.existsSync(path.join(__dirname, 'mcodes.config.json'))) {
+    if (fs.existsSync(path.join(currentDir, 'mcodes.config.json'))) {
         console.log('mcodes already initialized');
         return;
     }
@@ -100,7 +102,7 @@ async function initialize() {
                 const pageAccessToken = answers.pageAccessToken;
                 const appId = answers.appId;
 
-                fs.writeFileSync(path.join(__dirname, 'mcodes.config.json'), JSON.stringify({
+                fs.writeFileSync(path.join(currentDir, 'mcodes.config.json'), JSON.stringify({
                     name: pageName,
                     appId,
                     pageAccessToken
@@ -155,7 +157,7 @@ async function createCodeRequested(ref, description) {
 
     inquirer.prompt(questions).then(async (answers) => {
 
-        const accessToken = require(path.join(__dirname, 'mcodes.config.json'))['pageAccessToken'] || answers['auth-token'];
+        const accessToken = require(path.join(currentDir, 'mcodes.config.json'))['pageAccessToken'] || answers['auth-token'];
         const size = 2000;
     
         if (answers.createCode === true) {
@@ -174,9 +176,9 @@ async function saveCode(uri, id, ref, description) {
     const manifest = require('./manifest.json');
     const response = await axios.get(uri, { responseType: 'arraybuffer'});
     const fileBuffer = new Buffer(response.data, "binary");
-    fs.writeFileSync(path.join(__dirname, 'img', id + '.png'), fileBuffer);
+    fs.writeFileSync(path.join(currentDir, 'img', id + '.png'), fileBuffer);
     manifest[id] = { uri, ref, description }
-    fs.writeFileSync(path.join(__dirname, 'manifest.json'), `${JSON.stringify(manifest, null, "\t")}\n`);
+    fs.writeFileSync(path.join(currentDir, 'manifest.json'), `${JSON.stringify(manifest, null, "\t")}\n`);
 }
 
 async function syncRepo() {
