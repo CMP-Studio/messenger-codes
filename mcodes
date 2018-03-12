@@ -110,6 +110,7 @@ async function initialize() {
 
                 fs.writeFileSync(path.join(currentDir, 'manifest.json'), JSON.stringify({}, null, "\t"));
 
+                fs.mkdirSync(path.join(currentDir, 'img'));
 
                 console.log('mcodes initialized');
             });
