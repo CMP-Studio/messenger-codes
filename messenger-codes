@@ -27,7 +27,16 @@ let cmdValue, envValue, env2Value;
 program
 .version('0.1.0')
 .description('Manage messenger short codes with source control')
-.usage('[options] <file ...>')
+.usage(`The CLI provides three simple functions
+
+init [options] <file ...>
+Intializes a folder, config file and manifest file for your messenger application
+
+create <ref> <description>
+Creates a new messenger code with a ref and description, and places it in the mcodes directory
+
+sync
+Commits and syncs your local mcodes to the remote repository`)
 .arguments('<cmd> [arg1] [arg2] [arg3]')
 .action(function (cmd, arg1, arg2) {
     cmdValue = cmd;
@@ -93,7 +102,13 @@ async function initialize() {
                     type: 'input',
                     name: 'appId',
                     message: "App ID"
-                }
+                },
+                {
+                    type: 'input',
+                    name: 'folder',
+                    message: "folder",
+                    default: path.join(process.cwd(), 'messenger-codes')
+                },
             ];
         
             inquirer.prompt(questions).then(async (answers) => {
@@ -101,16 +116,22 @@ async function initialize() {
                 const pageName = answers.pageName;
                 const pageAccessToken = answers.pageAccessToken;
                 const appId = answers.appId;
+                const folder = answers.folder;
+
+                if (fs.existsSync(answers.folder) === false) {
+                    return;
+                }
 
                 fs.writeFileSync(path.join(currentDir, 'mcodes.config.json'), JSON.stringify({
                     name: pageName,
                     appId,
-                    pageAccessToken
+                    pageAccessToken,
+                    folder: answers.folder 
                 }, null, "\t"));
 
-                fs.writeFileSync(path.join(currentDir, 'manifest.json'), JSON.stringify({}, null, "\t"));
+                fs.mkdirSync(path.join(folder, 'img'));
 
-                fs.mkdirSync(path.join(currentDir, 'img'));
+                fs.writeFileSync(path.join(folder, 'manifest.json'), JSON.stringify({}, null, "\t"));
 
                 console.log('mcodes initialized');
             });
@@ -180,15 +201,16 @@ async function saveCode(uri, id, ref, description) {
     const manifest = require(path.join(process.cwd(), 'manifest.json'));
     const response = await axios.get(uri, { responseType: 'arraybuffer'});
     const fileBuffer = new Buffer(response.data, "binary");
-    fs.writeFileSync(path.join(currentDir, 'img', id + '.png'), fileBuffer);
+    fs.writeFileSync(path.join(manifest.folder, 'img', id + '.png'), fileBuffer);
     manifest[id] = { uri, ref, description }
-    fs.writeFileSync(path.join(currentDir, 'manifest.json'), `${JSON.stringify(manifest, null, "\t")}\n`);
+    fs.writeFileSync(path.join(manifest.folder, 'manifest.json'), `${JSON.stringify(manifest, null, "\t")}\n`);
 }
 
 async function syncRepo() {
+    const manifest = require(path.join(process.cwd(), 'manifest.json'));
     const commitMessage = `Automated commit by ${require("os").userInfo().username}`
     repo.pull('origin', 'master')
-        .add(['./img/*', './manifest.json'])
+        .add([`${manifest.folder}/img/*`, `${manifest.folder}/manifest.json`])
         .commit(commitMessage)
         .push('origin', 'master');
 
