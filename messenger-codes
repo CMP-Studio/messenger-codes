@@ -133,6 +133,13 @@ async function initialize() {
 
                 fs.writeFileSync(path.join(folder, 'manifest.json'), JSON.stringify({}, null, "\t"));
 
+                const gitIgnore = path.join(currentDir, '.gitignore');
+                if (gitIgnore) {
+                    fs.appendFileSync(gitIgnore, '\nmcodes.config.json\n');
+                } else {
+                    fs.writeFileSync(gitIgnore, 'mcodes.config.json\n')
+                }
+
                 console.log('mcodes initialized');
             });
         }
