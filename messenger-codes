@@ -1,12 +1,4 @@
 #!/usr/bin/env node
-
-/**
- * mcodes is a simple command line utility to manage dynamic messenger codes for your FB Messenger bot
- * You can use mcodes to create messenger codes and manage them through git. Then you can use your submodule
- * 
- * mcodes create <ref> <pageAccess> --> ID
- */
-
 const axios = require("axios");
 const crypto = require("crypto");
 const fs = require("fs");
@@ -27,7 +19,13 @@ let cmdValue, envValue, env2Value;
 program
 .version('0.1.0')
 .description('Manage messenger short codes with source control')
-.usage(`The CLI provides three simple functions
+.usage(`mcodes provides simple functions to manage Facebook Messenger codes
+with a configuration driven CLI allowing you to manage your codes with source
+control.
+
+Read More:
+https://developers.facebook.com/docs/messenger-platform/discovery/messenger-codes
+
 
 init [options] <file ...>
 Intializes a folder, config file and manifest file for your messenger application
@@ -70,8 +68,8 @@ if (typeof cmdValue !== 'undefined') {
     }
 
 } else {
-    console.error('no command given!');
-    process.exit(1);
+    console.log( program.helpInformation() );
+    process.exit(0);
 }
 
 async function initialize() {
@@ -215,5 +213,4 @@ async function syncRepo() {
         .push('origin', 'master');
 
     console.log('Sync complete.');
-}
-
+};
