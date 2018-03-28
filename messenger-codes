@@ -116,10 +116,12 @@ async function initialize() {
                 const appId = answers.appId;
                 const folder = answers.folder;
 
-                if (fs.existsSync(answers.folder) === false) {
-                    return;
+                if (fs.existsSync(answers.folder) === true) {
+                    console.log("Folder already exists.");
+                } else {
+                    fs.mkdirSync(answers.folder);
                 }
-                fs.mkdirSync(answers.folder);
+                
                 fs.writeFileSync(path.join(currentDir, 'mcodes.config.json'), JSON.stringify({
                     name: pageName,
                     appId,
