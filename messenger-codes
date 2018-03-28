@@ -119,7 +119,7 @@ async function initialize() {
                 if (fs.existsSync(answers.folder) === false) {
                     return;
                 }
-
+                fs.mkdirSync(answers.folder);
                 fs.writeFileSync(path.join(currentDir, 'mcodes.config.json'), JSON.stringify({
                     name: pageName,
                     appId,
