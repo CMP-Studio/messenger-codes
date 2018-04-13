@@ -15,6 +15,7 @@ const isNonNull = (v) => !isNull(v);
 
 let cmdValue, envValue, env2Value;
 
+const config = require(path.join(currentDir, 'mcodes.config.json'));
 
 program
 .version('0.1.0')
@@ -205,21 +206,22 @@ async function saveCode(uri, id, ref, description) {
     if (isNull(uri) || isNull(ref)) {
         return;
     }
-    const manifest = require(path.join(process.cwd(), 'manifest.json'));
+    const manifest = require(path.join(config.folder, 'manifest.json'));
     const response = await axios.get(uri, { responseType: 'arraybuffer'});
     const fileBuffer = new Buffer(response.data, "binary");
-    fs.writeFileSync(path.join(manifest.folder, 'img', id + '.png'), fileBuffer);
+    fs.writeFileSync(path.join(config.folder, 'img', id + '.png'), fileBuffer);
     manifest[id] = { uri, ref, description }
-    fs.writeFileSync(path.join(manifest.folder, 'manifest.json'), `${JSON.stringify(manifest, null, "\t")}\n`);
+    fs.writeFileSync(path.join(config.folder, 'manifest.json'), `${JSON.stringify(manifest, null, "\t")}\n`);
 }
 
 async function syncRepo() {
-    const manifest = require(path.join(process.cwd(), 'manifest.json'));
+    const manifest = require(path.join(config.folder, 'manifest.json'));
     const commitMessage = `Automated commit by ${require("os").userInfo().username}`
     repo.pull('origin', 'master')
-        .add([`${manifest.folder}/img/*`, `${manifest.folder}/manifest.json`])
+        .add([`${config.folder}/img/*`, `${config.folder}/manifest.json`])
         .commit(commitMessage)
         .push('origin', 'master');
 
     console.log('Sync complete.');
 };
+
