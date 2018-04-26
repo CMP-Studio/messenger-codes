@@ -105,7 +105,7 @@ async function initialize() {
                     type: 'input',
                     name: 'folder',
                     message: "folder",
-                    default: path.join(process.cwd(), 'messenger-codes')
+                    default: 'messenger-codes'
                 },
             ];
         
@@ -206,7 +206,7 @@ async function saveCode(uri, id, ref, description) {
         return;
     }
     const config = require(path.join(process.cwd(), 'mcodes.config.json'));
-    const manifest = require(path.join(config.folder, 'manifest.json'))
+    const manifest = require(path.join(process.cwd(), config.folder, 'manifest.json'))
     const response = await axios.get(uri, { responseType: 'arraybuffer'});
     const fileBuffer = new Buffer(response.data, "binary");
     fs.writeFileSync(path.join(config.folder, 'img', id + '.png'), fileBuffer);
