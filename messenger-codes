@@ -15,7 +15,6 @@ const isNonNull = (v) => !isNull(v);
 
 let cmdValue, envValue, env2Value;
 
-const config = require(path.join(currentDir, 'mcodes.config.json'));
 
 program
 .version('0.1.0')
@@ -127,7 +126,7 @@ async function initialize() {
                     name: pageName,
                     appId,
                     pageAccessToken,
-                    folder: answers.folder 
+                    folder: answers.folder
                 }, null, "\t"));
 
                 fs.mkdirSync(path.join(folder, 'img'));
@@ -206,7 +205,8 @@ async function saveCode(uri, id, ref, description) {
     if (isNull(uri) || isNull(ref)) {
         return;
     }
-    const manifest = require(path.join(config.folder, 'manifest.json'));
+    const config = require(path.join(process.cwd(), 'mcodes.config.json'));
+    const manifest = require(path.join(config.folder, 'manifest.json'))
     const response = await axios.get(uri, { responseType: 'arraybuffer'});
     const fileBuffer = new Buffer(response.data, "binary");
     fs.writeFileSync(path.join(config.folder, 'img', id + '.png'), fileBuffer);
@@ -215,7 +215,7 @@ async function saveCode(uri, id, ref, description) {
 }
 
 async function syncRepo() {
-    const manifest = require(path.join(config.folder, 'manifest.json'));
+    const config = require(path.join(process.cwd(), 'mcodes.config.json'));
     const commitMessage = `Automated commit by ${require("os").userInfo().username}`
     repo.pull('origin', 'master')
         .add([`${config.folder}/img/*`, `${config.folder}/manifest.json`])
@@ -224,4 +224,3 @@ async function syncRepo() {
 
     console.log('Sync complete.');
 };
-
